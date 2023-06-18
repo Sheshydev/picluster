@@ -1,0 +1,9 @@
+- name: apt update and upgrade
+  hosts: picluster
+  become: true
+  tasks:
+  - name: apt update
+    ansible.builtin.apt: 
+      update_cache: true
+  - name: apt upgrade:
+    upgrade: yes

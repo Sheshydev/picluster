@@ -1,0 +1,10 @@
+- name: mount disk
+  hosts: alpha
+  become: true
+  tasks:
+  - name: mount disk
+    ansible.posix.mount:
+      path: /home/pi/mount
+      src: /dev/sda2
+      fstype: exfat
+      state: mounted
