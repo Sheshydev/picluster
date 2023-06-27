@@ -1,10 +1,52 @@
-- name: mount disk
-  hosts: alpha
+# - name: create mount directory
+#   hosts: picluster
+#   become: true
+#   tasks:
+#   - name: 
+
+- name: common
+  hosts: all
   become: true
   tasks:
+    - name: Include Samba Server role
+      ansible.builtin.include_role:
+        name: vladgh.samba.server
+
+- name: setup main node share
+  become: true
+  hosts: alpha
+  collections:
+    - vladgh.samba
+  tasks:
+  - name: create mount dir
+    ansible.builtin.file:
+      path: "{{mount_path}}"
+      state: directory
+      mode: '0766'
   - name: mount disk
     ansible.posix.mount:
-      path: /home/pi/mount
-      src: /dev/sda2
+      path: "{{mount_path}}"
+      src: "{{mount_src}}"
       fstype: exfat
       state: mounted
+      opts: defaults
+  - name: setup new linux user
+    ansible.builtin.user:
+      name: "{{cluster_user}}"
+      shell: /bin/bash
+      group: users
+  - name: setup new samba share user
+    include_role:
+      name: vladgh.samba.server
+    vars:
+      samba_users:
+        - name: "{{cluster_user}}"
+        - password: "{{cluster_user_pass}}"
+      samba_shares:
+        - name: cluster_share
+          comment: samba share for raspberry pi cluster
+          path: "{{mount_path}}"
+          valid_users: "{{cluster_user}}"
+          browseable: 'no'
+  vars_files:
+    - ./vars.yml
